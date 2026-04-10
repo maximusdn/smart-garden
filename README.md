@@ -11,5 +11,5 @@
 | Nome                             | GitHub             |
 | -------------------------------- | ------------------ |
 | Maximus Daniel Nascimento        | [@maximusdn]       |
-| Jonathan Ribeiro                 | [@RickRocha022]    |
-| Gabriel Henrique Rodrigues Rocha | [@JonathanRbo-puc] |
+| Jonathan Ribeiro                 | [@JonathanRbo-puc]    |
+| Gabriel Henrique Rodrigues Rocha | [@RickRocha022] |
