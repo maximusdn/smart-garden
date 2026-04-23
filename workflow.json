@@ -1,0 +1,319 @@
+{
+  "name": "Smart Garden com IA",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Configuração Smart Garden",
+        "formFields": {
+          "values": [
+            { "fieldLabel": "latitude", "fieldType": "number", "requiredField": true },
+            { "fieldLabel": "longitude", "fieldType": "number", "requiredField": true }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-form-trigger",
+      "name": "Configuração Smart Garden",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [240, 60],
+      "webhookId": "smart-garden-webhook-002"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.open-meteo.com/v1/forecast?latitude={{ $json.latitude }}&longitude={{ $json.longitude }}&hourly=precipitation_probability&forecast_days=1",
+        "options": {}
+      },
+      "id": "node-http-weather",
+      "name": "Obter Previsão do Tempo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 200]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-rain",
+              "name": "rain_probability",
+              "value": "={{ $json.hourly.precipitation_probability[0] }}",
+              "type": "number"
+            },
+            {
+              "id": "assign-lat",
+              "name": "latitude",
+              "value": "={{ $('Configuração Smart Garden').item.json.latitude }}",
+              "type": "number"
+            },
+            {
+              "id": "assign-lon",
+              "name": "longitude",
+              "value": "={{ $('Configuração Smart Garden').item.json.longitude }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-set-rain",
+      "name": "Salvar Chuva",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [240, 340]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.open-meteo.com/v1/forecast?latitude={{ $json.latitude }}&longitude={{ $json.longitude }}&hourly=soil_moisture_0_to_1cm&forecast_days=1",
+        "options": {}
+      },
+      "id": "node-http-soil",
+      "name": "Umidade do Solo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 480]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-soil",
+              "name": "soil_moisture_m3",
+              "value": "={{ $json.hourly.soil_moisture_0_to_1cm[0] }}",
+              "type": "number"
+            },
+            {
+              "id": "assign-rain2",
+              "name": "rain_probability",
+              "value": "={{ $('Salvar Chuva').item.json.rain_probability }}",
+              "type": "number"
+            },
+            {
+              "id": "assign-lat2",
+              "name": "latitude",
+              "value": "={{ $('Salvar Chuva').item.json.latitude }}",
+              "type": "number"
+            },
+            {
+              "id": "assign-lon2",
+              "name": "longitude",
+              "value": "={{ $('Salvar Chuva').item.json.longitude }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-set-soil",
+      "name": "Salvar Solo",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [240, 620]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.bigdatacloud.net/data/reverse-geocode-client?latitude={{ $json.latitude }}&longitude={{ $json.longitude }}&localityLanguage=pt",
+        "options": {}
+      },
+      "id": "node-http-location",
+      "name": "Nome da Região",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 760]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-region",
+              "name": "region_name",
+              "value": "={{ $json.city + ', ' + $json.principalSubdivision + ' - ' + $json.countryName }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-soil2",
+              "name": "soil_moisture_m3",
+              "value": "={{ $('Salvar Solo').item.json.soil_moisture_m3 }}",
+              "type": "number"
+            },
+            {
+              "id": "assign-rain3",
+              "name": "rain_probability",
+              "value": "={{ $('Salvar Solo').item.json.rain_probability }}",
+              "type": "number"
+            },
+            {
+              "id": "assign-lat3",
+              "name": "latitude",
+              "value": "={{ $('Salvar Solo').item.json.latitude }}",
+              "type": "number"
+            },
+            {
+              "id": "assign-lon3",
+              "name": "longitude",
+              "value": "={{ $('Salvar Solo').item.json.longitude }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-set-dados",
+      "name": "Consolidar Dados",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [240, 900]
+    },
+    {
+      "parameters": {
+        "model": "claude-opus-4-5",
+        "options": {
+          "systemMessage": "Você é um agrônomo especialista em irrigação inteligente e sustentabilidade. Analise os dados fornecidos e decida se a irrigação deve ser realizada. Responda SEMPRE no seguinte formato JSON exato, sem markdown:\n{\n  \"decisao\": \"IRRIGAR\" ou \"CANCELAR\",\n  \"motivo\": \"Explicação objetiva em até 2 frases.\",\n  \"recomendacao\": \"Dica prática adicional para o jardineiro.\"\n}\n\nCritérios para CANCELAR: chance de chuva acima de 40% OU umidade do solo acima de 0.35 m³/m³.\nCritérios para IRRIGAR: chance de chuva abaixo de 40% E umidade do solo abaixo de 0.35 m³/m³."
+        },
+        "messages": {
+          "messageType": "defineBelow",
+          "messages": [
+            {
+              "role": "user",
+              "content": "=Analise os seguintes dados e decida sobre a irrigação:\n\n- Região: {{ $json.region_name }}\n- Coordenadas: {{ $json.latitude }}, {{ $json.longitude }}\n- Chance de chuva na próxima hora: {{ $json.rain_probability }}%\n- Umidade atual do solo (0-1cm): {{ $json.soil_moisture_m3 }} m³/m³ (referência: seco < 0.20, ideal 0.20-0.35, úmido > 0.35)\n\nConsiderando esses dados, a irrigação deve ser realizada agora?"
+            }
+          ]
+        }
+      },
+      "id": "node-llm-claude",
+      "name": "Analisar com IA (Claude)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.7,
+      "position": [240, 1040]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-parse",
+              "name": "llm_result",
+              "value": "={{ JSON.parse($json.text) }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-parse-llm",
+      "name": "Extrair Decisão da IA",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [240, 1180]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-llm-decision",
+              "leftValue": "={{ $json.llm_result.decisao }}",
+              "rightValue": "IRRIGAR",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if-llm",
+      "name": "Decisão da IA",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [240, 1320]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Iniciando Irrigação",
+        "completionMessage": "={{ '💧 ' + $json.llm_result.motivo + '\\n\\n💡 ' + $json.llm_result.recomendacao }}",
+        "options": {}
+      },
+      "id": "node-form-end-irrigate",
+      "name": "Iniciar Irrigação",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.2,
+      "position": [60, 1460]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Irrigação Cancelada pela IA",
+        "completionMessage": "={{ '🌧️ ' + $json.llm_result.motivo + '\\n\\n💡 ' + $json.llm_result.recomendacao }}",
+        "options": {}
+      },
+      "id": "node-form-end-cancel",
+      "name": "Irrigação Cancelada",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.2,
+      "position": [420, 1460]
+    }
+  ],
+  "connections": {
+    "Configuração Smart Garden": {
+      "main": [[{ "node": "Obter Previsão do Tempo", "type": "main", "index": 0 }]]
+    },
+    "Obter Previsão do Tempo": {
+      "main": [[{ "node": "Salvar Chuva", "type": "main", "index": 0 }]]
+    },
+    "Salvar Chuva": {
+      "main": [[{ "node": "Umidade do Solo", "type": "main", "index": 0 }]]
+    },
+    "Umidade do Solo": {
+      "main": [[{ "node": "Salvar Solo", "type": "main", "index": 0 }]]
+    },
+    "Salvar Solo": {
+      "main": [[{ "node": "Nome da Região", "type": "main", "index": 0 }]]
+    },
+    "Nome da Região": {
+      "main": [[{ "node": "Consolidar Dados", "type": "main", "index": 0 }]]
+    },
+    "Consolidar Dados": {
+      "main": [[{ "node": "Analisar com IA (Claude)", "type": "main", "index": 0 }]]
+    },
+    "Analisar com IA (Claude)": {
+      "main": [[{ "node": "Extrair Decisão da IA", "type": "main", "index": 0 }]]
+    },
+    "Extrair Decisão da IA": {
+      "main": [[{ "node": "Decisão da IA", "type": "main", "index": 0 }]]
+    },
+    "Decisão da IA": {
+      "main": [
+        [{ "node": "Iniciar Irrigação", "type": "main", "index": 0 }],
+        [{ "node": "Irrigação Cancelada", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2026-04-22T00:00:00.000Z",
+      "updatedAt": "2026-04-22T00:00:00.000Z",
+      "id": "tag-smart-garden",
+      "name": "Smart Garden"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-22T00:00:00.000Z",
+  "versionId": "smart-garden-v4-llm"
+}
