@@ -4,10 +4,12 @@
     {
       "parameters": {
         "formTitle": "Configuração Smart Garden",
+        "formDescription": "Informe sua localização e uma dúvida sobre irrigação do seu jardim.",
         "formFields": {
           "values": [
-            { "fieldLabel": "latitude", "fieldType": "number", "requiredField": true },
-            { "fieldLabel": "longitude", "fieldType": "number", "requiredField": true }
+            { "fieldLabel": "latitude",  "fieldType": "number", "requiredField": true },
+            { "fieldLabel": "longitude", "fieldType": "number", "requiredField": true },
+            { "fieldLabel": "pergunta",  "fieldType": "text",   "requiredField": true, "placeholder": "Ex: Devo irrigar agora? Quanto tempo de irrigação?" }
           ]
         },
         "options": {}
@@ -19,6 +21,7 @@
       "position": [240, 60],
       "webhookId": "smart-garden-webhook-002"
     },
+
     {
       "parameters": {
         "method": "GET",
@@ -31,6 +34,7 @@
       "typeVersion": 4.2,
       "position": [240, 200]
     },
+
     {
       "parameters": {
         "assignments": {
@@ -52,6 +56,12 @@
               "name": "longitude",
               "value": "={{ $('Configuração Smart Garden').item.json.longitude }}",
               "type": "number"
+            },
+            {
+              "id": "assign-pergunta",
+              "name": "pergunta",
+              "value": "={{ $('Configuração Smart Garden').item.json.pergunta }}",
+              "type": "string"
             }
           ]
         },
@@ -63,6 +73,7 @@
       "typeVersion": 3.4,
       "position": [240, 340]
     },
+
     {
       "parameters": {
         "method": "GET",
@@ -75,6 +86,7 @@
       "typeVersion": 4.2,
       "position": [240, 480]
     },
+
     {
       "parameters": {
         "assignments": {
@@ -102,6 +114,12 @@
               "name": "longitude",
               "value": "={{ $('Salvar Chuva').item.json.longitude }}",
               "type": "number"
+            },
+            {
+              "id": "assign-pergunta2",
+              "name": "pergunta",
+              "value": "={{ $('Salvar Chuva').item.json.pergunta }}",
+              "type": "string"
             }
           ]
         },
@@ -113,6 +131,7 @@
       "typeVersion": 3.4,
       "position": [240, 620]
     },
+
     {
       "parameters": {
         "method": "GET",
@@ -125,6 +144,7 @@
       "typeVersion": 4.2,
       "position": [240, 760]
     },
+
     {
       "parameters": {
         "assignments": {
@@ -158,6 +178,12 @@
               "name": "longitude",
               "value": "={{ $('Salvar Solo').item.json.longitude }}",
               "type": "number"
+            },
+            {
+              "id": "assign-pergunta3",
+              "name": "pergunta",
+              "value": "={{ $('Salvar Solo').item.json.pergunta }}",
+              "type": "string"
             }
           ]
         },
@@ -169,104 +195,78 @@
       "typeVersion": 3.4,
       "position": [240, 900]
     },
+
     {
       "parameters": {
-        "model": "claude-opus-4-5",
-        "options": {
-          "systemMessage": "Você é um agrônomo especialista em irrigação inteligente e sustentabilidade. Analise os dados fornecidos e decida se a irrigação deve ser realizada. Responda SEMPRE no seguinte formato JSON exato, sem markdown:\n{\n  \"decisao\": \"IRRIGAR\" ou \"CANCELAR\",\n  \"motivo\": \"Explicação objetiva em até 2 frases.\",\n  \"recomendacao\": \"Dica prática adicional para o jardineiro.\"\n}\n\nCritérios para CANCELAR: chance de chuva acima de 40% OU umidade do solo acima de 0.35 m³/m³.\nCritérios para IRRIGAR: chance de chuva abaixo de 40% E umidade do solo abaixo de 0.35 m³/m³."
+        "modelId": {
+          "__rl": true,
+          "value": "gemini-2.0-flash-lite-preview",
+          "mode": "list",
+          "cachedResultName": "gemini-2.0-flash-lite-preview"
         },
+        "options": {},
         "messages": {
-          "messageType": "defineBelow",
-          "messages": [
+          "messageValues": [
+            {
+              "role": "model",
+              "content": "Você é um assistente de jardinagem e irrigação inteligente. Seu papel é analisar dados meteorológicos e de umidade do solo para orientar o jardineiro sobre quando e como irrigar. Responda de forma prática e direta, sempre em português."
+            },
             {
               "role": "user",
-              "content": "=Analise os seguintes dados e decida sobre a irrigação:\n\n- Região: {{ $json.region_name }}\n- Coordenadas: {{ $json.latitude }}, {{ $json.longitude }}\n- Chance de chuva na próxima hora: {{ $json.rain_probability }}%\n- Umidade atual do solo (0-1cm): {{ $json.soil_moisture_m3 }} m³/m³ (referência: seco < 0.20, ideal 0.20-0.35, úmido > 0.35)\n\nConsiderando esses dados, a irrigação deve ser realizada agora?"
+              "content": "={{ 'Dados coletados para a região: ' + $json.region_name + '\\n' + 'Coordenadas: ' + $json.latitude + ', ' + $json.longitude + '\\n' + 'Chance de chuva na próxima hora: ' + $json.rain_probability + '%\\n' + 'Umidade atual do solo (0-1cm): ' + $json.soil_moisture_m3 + ' m³/m³ (referência: seco < 0.20 | ideal 0.20–0.35 | úmido > 0.35)\\n\\n' + 'Usuário pergunta: ' + $('Configuração Smart Garden').item.json.pergunta }}"
             }
           ]
         }
       },
-      "id": "node-llm-claude",
-      "name": "Analisar com IA (Claude)",
-      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
-      "typeVersion": 1.7,
+      "id": "node-llm-gemini",
+      "name": "Analisar com IA (Gemini)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
       "position": [240, 1040]
     },
+
     {
       "parameters": {
         "assignments": {
           "assignments": [
             {
-              "id": "assign-parse",
-              "name": "llm_result",
-              "value": "={{ JSON.parse($json.text) }}",
-              "type": "object"
+              "id": "assign-resposta",
+              "name": "resposta_ia",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-regiao-final",
+              "name": "region_name",
+              "value": "={{ $('Consolidar Dados').item.json.region_name }}",
+              "type": "string"
             }
           ]
         },
         "options": {}
       },
-      "id": "node-parse-llm",
-      "name": "Extrair Decisão da IA",
+      "id": "node-set-resposta",
+      "name": "Extrair Resposta da IA",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [240, 1180]
     },
+
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": false,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "condition-llm-decision",
-              "leftValue": "={{ $json.llm_result.decisao }}",
-              "rightValue": "IRRIGAR",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
+        "operation": "completion",
+        "completionTitle": "Recomendação do seu Assistente de Jardim 🌱",
+        "completionMessage": "={{ '📍 Região: ' + $json.region_name + '\\n\\n🤖 ' + $json.resposta_ia }}",
         "options": {}
       },
-      "id": "node-if-llm",
-      "name": "Decisão da IA",
-      "type": "n8n-nodes-base.if",
+      "id": "node-form-end",
+      "name": "Exibir Resposta",
+      "type": "n8n-nodes-base.form",
       "typeVersion": 2.2,
       "position": [240, 1320]
-    },
-    {
-      "parameters": {
-        "operation": "completion",
-        "completionTitle": "Iniciando Irrigação",
-        "completionMessage": "={{ '💧 ' + $json.llm_result.motivo + '\\n\\n💡 ' + $json.llm_result.recomendacao }}",
-        "options": {}
-      },
-      "id": "node-form-end-irrigate",
-      "name": "Iniciar Irrigação",
-      "type": "n8n-nodes-base.form",
-      "typeVersion": 2.2,
-      "position": [60, 1460]
-    },
-    {
-      "parameters": {
-        "operation": "completion",
-        "completionTitle": "Irrigação Cancelada pela IA",
-        "completionMessage": "={{ '🌧️ ' + $json.llm_result.motivo + '\\n\\n💡 ' + $json.llm_result.recomendacao }}",
-        "options": {}
-      },
-      "id": "node-form-end-cancel",
-      "name": "Irrigação Cancelada",
-      "type": "n8n-nodes-base.form",
-      "typeVersion": 2.2,
-      "position": [420, 1460]
     }
   ],
+
   "connections": {
     "Configuração Smart Garden": {
       "main": [[{ "node": "Obter Previsão do Tempo", "type": "main", "index": 0 }]]
@@ -287,33 +287,28 @@
       "main": [[{ "node": "Consolidar Dados", "type": "main", "index": 0 }]]
     },
     "Consolidar Dados": {
-      "main": [[{ "node": "Analisar com IA (Claude)", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Analisar com IA (Gemini)", "type": "main", "index": 0 }]]
     },
-    "Analisar com IA (Claude)": {
-      "main": [[{ "node": "Extrair Decisão da IA", "type": "main", "index": 0 }]]
+    "Analisar com IA (Gemini)": {
+      "main": [[{ "node": "Extrair Resposta da IA", "type": "main", "index": 0 }]]
     },
-    "Extrair Decisão da IA": {
-      "main": [[{ "node": "Decisão da IA", "type": "main", "index": 0 }]]
-    },
-    "Decisão da IA": {
-      "main": [
-        [{ "node": "Iniciar Irrigação", "type": "main", "index": 0 }],
-        [{ "node": "Irrigação Cancelada", "type": "main", "index": 0 }]
-      ]
+    "Extrair Resposta da IA": {
+      "main": [[{ "node": "Exibir Resposta", "type": "main", "index": 0 }]]
     }
   },
+
   "pinData": {},
   "settings": { "executionOrder": "v1" },
   "staticData": null,
   "tags": [
     {
       "createdAt": "2026-04-22T00:00:00.000Z",
-      "updatedAt": "2026-04-22T00:00:00.000Z",
+      "updatedAt": "2026-05-07T00:00:00.000Z",
       "id": "tag-smart-garden",
       "name": "Smart Garden"
     }
   ],
   "triggerCount": 1,
-  "updatedAt": "2026-04-22T00:00:00.000Z",
-  "versionId": "smart-garden-v4-llm"
+  "updatedAt": "2026-05-07T00:00:00.000Z",
+  "versionId": "smart-garden-v6-gemini-flash-lite"
 }
