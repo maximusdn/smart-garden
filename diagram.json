@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "author": "Smart Garden",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-uno", "id": "uno", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot1",
+      "top": -120,
+      "left": -180,
+      "attrs": { "label": "Umidade (A0)" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot2",
+      "top": -120,
+      "left": 20,
+      "attrs": { "label": "Limite (A1)" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledVerde",
+      "top": -120,
+      "left": 220,
+      "attrs": { "color": "green", "label": "LED Verde" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledVermelho",
+      "top": -120,
+      "left": 280,
+      "attrs": { "color": "red", "label": "LED Vermelho" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "res1",
+      "top": -80,
+      "left": 220,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "res2",
+      "top": -80,
+      "left": 280,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd1",
+      "top": 180,
+      "left": -180,
+      "attrs": { "pins": "full" }
+    }
+  ],
+  "connections": [
+    [ "pot1:SIG", "uno:A0", "green", [] ],
+    [ "pot1:VCC", "uno:5V", "red", [] ],
+    [ "pot1:GND", "uno:GND.1", "black", [] ],
+    [ "pot2:SIG", "uno:A1", "green", [] ],
+    [ "pot2:VCC", "uno:5V", "red", [] ],
+    [ "pot2:GND", "uno:GND.1", "black", [] ],
+    [ "ledVerde:A", "res1:1", "green", [] ],
+    [ "res1:2", "uno:8", "green", [] ],
+    [ "ledVerde:K", "uno:GND.2", "black", [] ],
+    [ "ledVermelho:A", "res2:1", "red", [] ],
+    [ "res2:2", "uno:9", "red", [] ],
+    [ "ledVermelho:K", "uno:GND.2", "black", [] ],
+    [ "lcd1:VSS", "uno:GND.3", "black", [] ],
+    [ "lcd1:VDD", "uno:5V", "red", [] ],
+    [ "lcd1:V0", "uno:GND.3", "black", [] ],
+    [ "lcd1:RS", "uno:12", "blue", [] ],
+    [ "lcd1:RW", "uno:GND.3", "black", [] ],
+    [ "lcd1:E", "uno:11", "blue", [] ],
+    [ "lcd1:D4", "uno:5", "blue", [] ],
+    [ "lcd1:D5", "uno:4", "blue", [] ],
+    [ "lcd1:D6", "uno:3", "blue", [] ],
+    [ "lcd1:D7", "uno:2", "blue", [] ],
+    [ "lcd1:A", "uno:5V", "red", [] ],
+    [ "lcd1:K", "uno:GND.3", "black", [] ]
+  ],
+  "dependencies": {}
+}
